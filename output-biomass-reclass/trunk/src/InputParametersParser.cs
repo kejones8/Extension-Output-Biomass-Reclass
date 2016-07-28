@@ -1,5 +1,5 @@
-//  Copyright 2005-2010 Portland State University, University of Wisconsin-Madison
-//  Authors:  Robert M. Scheller, Jimm Domingo
+//  Copyright 2005-2016 Portland State University
+//  Authors:  Robert M. Scheller
 
 using Edu.Wisc.Forest.Flel.Util;
 using Landis.Core;
@@ -20,7 +20,7 @@ namespace Landis.Extension.Output.BiomassReclass
         {
             get
             {
-                return PlugIn.PlugInName;
+                return PlugIn.ExtensionName;
             }
         }
 

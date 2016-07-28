@@ -1,9 +1,10 @@
-//  Copyright 2005-2010 Portland State University, University of Wisconsin-Madison
-//  Authors:  Robert M. Scheller, Jimm Domingo
+//  Copyright 2005-2016 Portland State University
+//  Authors:  Robert M. Scheller
 
 using Landis.Core;
 using Landis.Library.BiomassCohorts;
 using Landis.SpatialModeling;
+using Landis.Library.Metadata;
 using System.Collections.Generic;
 using System;
 
@@ -14,7 +15,9 @@ namespace Landis.Extension.Output.BiomassReclass
     {
 
         public static readonly ExtensionType extType = new ExtensionType("output");
-        public static readonly string PlugInName = "Output Biomass Reclass";
+        public static readonly string ExtensionName = "Output Biomass Reclass";
+        public static MetadataTable<MapDefLog>[] individualMapDefLog;
+        public static List<string>[] forestTypeNames = new List<string>[20];
 
         private string mapNameTemplate;
         private IEnumerable<IMapDefinition> mapDefs;
@@ -26,7 +29,7 @@ namespace Landis.Extension.Output.BiomassReclass
         //---------------------------------------------------------------------
 
         public PlugIn()
-            : base(PlugInName, extType)
+            : base(ExtensionName, extType)
         {
         }
 
@@ -63,6 +66,7 @@ namespace Landis.Extension.Output.BiomassReclass
             SiteVars.Initialize();
             this.mapNameTemplate = parameters.MapFileNames;
             this.mapDefs = parameters.ReclassMaps;
+            MetadataHandler.InitializeMetadata(parameters.Timestep, this.mapDefs, this.mapNameTemplate);
 
         }
 
@@ -97,6 +101,31 @@ namespace Landis.Extension.Output.BiomassReclass
                 }
 
             }
+
+            int mapDefCnt = 0;
+            foreach (IMapDefinition map in mapDefs)
+            {
+                List<IForestType> forestTypes = map.ForestTypes;
+                ExtensionMetadata.ColumnNames = PlugIn.forestTypeNames[mapDefCnt];
+
+                double[] arrayOfForestTypes = new double[forestTypes.Count];
+
+                foreach (ActiveSite site in ModelCore.Landscape)
+                {
+                    int ftypeFinal = (int)CalcForestType(forestTypes, site);
+                    arrayOfForestTypes[ftypeFinal]++;
+                }
+
+                individualMapDefLog[mapDefCnt].Clear();
+                MapDefLog mdl = new MapDefLog();
+                mdl.Time = ModelCore.CurrentTime;
+                mdl.ForestTypeCnt_ = arrayOfForestTypes;
+                individualMapDefLog[mapDefCnt].AddObject(mdl);
+                individualMapDefLog[mapDefCnt].WriteToFile();
+
+                mapDefCnt++;
+            }
+
 
         }
 
